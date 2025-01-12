@@ -1,0 +1,98 @@
+a.Subnetting the 192.168.10.0/24 Network for Departmental Segmentation and Network Optimization
+To fulfill Karoo Manufacturing’s network expansion requirements, the IP range 192.168.10.0/24 is subdivided into smaller subnets, each dedicated to one of the departments: Administration, Sales, Production, and HR.
+
+Understanding subnetting: Subnetting is a technique used to divide a larger IP network into smaller, manageable sub-networks, or subnets. Each subnet functions as an independent network segment, which helps in organizing the company’s network structure, enhances security, and simplifies network management. By subnetting, we can assign each department its own range of IP addresses, which improves network organization and can limit broadcast traffic, reducing potential network congestion.
+
+For Karoo Manufacturing, subnetting also enables scalability. With each department operating on a unique subnet, it becomes easier to monitor and control data flow, allocate resources, and expand the network infrastructure without interfering with other departments' network segments.
+
+Subnetting the 192.168.10.0/24 network: The given IP range, 192.168.10.0/24, includes 256 addresses in total. However, to meet the requirement of having four separate subnets with at least 30 usable addresses each, we need to create subnet masks that can support this.
+
+Each department requires a minimum of 30 devices, which means we need 32 IP addresses per subnet (30 usable addresses for devices and 2 reserved addresses for network and broadcast purposes). This can be achieved by using a /27 subnet mask, or 255.255.255.224, which divides the original 192.168.10.0/24 network into eight subnets of 32 addresses each. We’ll use four of these subnets to meet the company’s needs.
+
+Here is the breakdown of each subnet:
+
+1. Subnet 1 (192.168.10.0/27): This subnet, allocated to the Administration department, has a network address of 192.168.10.0, a broadcast address of 192.168.10.31, and provides a usable host range of 192.168.10.1 to 192.168.10.30.
+2. Subnet 2 (192.168.10.32/27): This subnet, allocated to the Sales department, has a network address of 192.168.10.32, a broadcast address of 192.168.10.63, and a usable host range of 192.168.10.33 to 192.168.10.62.
+3. Subnet 3 (192.168.10.64/27): Assigned to the Production department, this subnet’s network address is 192.168.10.64, its broadcast address is 192.168.10.95, and its usable host range is 192.168.10.65 to 192.168.10.94.
+4. Subnet 4 (192.168.10.96/27): This final subnet is allocated to the HR department, with a network address of 192.168.10.96, a broadcast address of 192.168.10.127, and a usable host range of 192.168.10.97 to 192.168.10.126.
+
+Each subnet is configured with the subnet mask 255.255.255.224, providing the required 32 IP addresses and ensuring that all department-specific devices can connect within their respective ranges.
+
+Benefits of this subnetting approach: Subnetting the 192.168.10.0/24 network into smaller networks provides Karoo Manufacturing with improved network management, security, and scalability. By isolating each department’s network, it becomes easier to monitor and secure data flow, reducing the risk of unauthorized access and the potential for cross-departmental broadcast interference. Additionally, this structured approach allows the network to be scaled more efficiently as the company grows, ensuring that each department has the dedicated IP space it needs without impacting others.
+Subnet 1 (192.168.10.0/27) - Administration
+Network Address: 192.168.10.0
+Subnet Mask: 255.255.255.224
+First Usable Host: 192.168.10.1
+Last Usable Host: 192.168.10.30
+Broadcast Address: 192.168.10.31
+
+Network topology structure for Question 3 (screenshot)
+ 
+
+b. Cisco ASA Firewall Configuration Documentation for Karoo Manufacturing
+Objective:
+The goal of this configuration is to set up a secure and functional Cisco ASA firewall that meets the specified requirements for Karoo Manufacturing. This includes enabling HTTP access to a web server hosted in the DMZ, providing internet access for internal network users, and blocking all traffic from the DMZ to the internal network.
+Network Overview:
+1. Internal Network: IP range 10.1.1.0/24, used for office staff.
+2. DMZ Network: IP range 192.168.1.0/24, housing a web server at 192.168.1.100.
+3. External Network: Simulates internet access for external clients.
+
+Step-by-Step Configuration
+1. Interface Configuration
+1. Inside Interface  
+   interface GigabitEthernet1/1
+   nameif inside
+   security-level 100
+   ip address 10.1.1.1 255.255.255.0
+
+2. DMZ Interface  
+   interface GigabitEthernet1/2
+   nameif dmz
+   security-level 50
+   ip address 192.168.1.1 255.255.255.0
+
+3. Outside Interface  
+   interface GigabitEthernet1/3
+   nameif outside
+   security-level 0
+   ip address 203.0.113.1 255.255.255.0
+2. Access Control Lists (ACLs)
+1. Permit HTTP Traffic to the Web Server  
+Allows incoming HTTP traffic from any external client to the DMZ web server, filtering access to the specified port.
+   access-list OUTSIDE_IN extended permit tcp any host 192.168.1.100 eq 80
+   access-group OUTSIDE_IN in interface outside
+
+2. Allow Internet Access for Internal Users  
+   Enables unrestricted outbound internet access for internal users.
+   access-list INSIDE_OUT extended permit ip any any
+   access-group INSIDE_OUT in interface inside
+
+3. Block DMZ Traffic to the Internal Network  
+   Prohibits any traffic originating from the DMZ from reaching the internal network.
+   access-list DMZ_OUT extended deny ip any 10.1.1.0 255.255.255.0
+   access-group DMZ_OUT in interface dmz
+
+3. Network Address Translation (NAT)
+1. NAT for Internal Network  
+   object network obj_inside
+   subnet 10.1.1.0 255.255.255.0
+   nat (inside,outside) dynamic interface
+
+2. Optional Static NAT for DMZ Web Server  
+   object network obj_dmz_web
+   host 192.168.1.100
+   nat (dmz,outside) static <public_dmz_ip>
+Testing and Verification
+1. Test HTTP Access
+   Verify external clients can reach the DMZ web server at 192.168.1.100 using HTTP (TCP port 80). Confirm that no other inbound traffic is allowed.
+2. Internet Access from Internal Network
+   From an internal device, test internet connectivity by accessing an external IP. This confirms outbound access for internal users.
+3. Test DMZ-to-Internal Block
+   Attempt to initiate connections from a DMZ device to any IP within the internal network. Access should be blocked, verifying that security policies are correctly enforced.
+
+Summary
+The ASA firewall configuration has been set up to allow secure and controlled access based on the company’s requirements:
+- HTTP traffic is permitted to the DMZ web server.
+- Internal network users can access the internet.
+- All DMZ-to-internal traffic is blocked for added security.
+This configuration meets all specified security standards and provides a robust structure for the company's expanding network infrastructure.
